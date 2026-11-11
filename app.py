@@ -13,21 +13,24 @@ from gtts import gTTS
 
 app = Flask(__name__)
 import tempfile
-tempfile.tempdir = 'D:\\voix_off_v2\\static\\uploads'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+tempfile.tempdir = os.path.join(BASE_DIR, 'static', 'uploads')
 taches = {}
 
-AUDIO_DIR = os.path.join('D:\\voix_off_v2', 'static', 'audio')
-UPLOAD_DIR = os.path.join('D:\\voix_off_v2', 'static', 'uploads')
+AUDIO_DIR = os.path.join(BASE_DIR, 'static', 'audio')
+UPLOAD_DIR = os.path.join(BASE_DIR, 'static', 'uploads')
 os.makedirs(AUDIO_DIR, exist_ok=True)
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-ELEVEN_API_KEY = "sk_98650a8bf3b413fec9d7b00e2f05ee0030cd0978b335d35f"
+ELEVEN_API_KEY = os.environ.get('ELEVEN_API_KEY')
 
 async def generer_edge_tts(texte, voix, chemin):
     communicate = edge_tts.Communicate(texte, voix)
     await communicate.save(chemin)
 
 def generer_eleven(texte, voice_id, settings, chemin):
+    if not ELEVEN_API_KEY:
+        raise RuntimeError("La variable ELEVEN_API_KEY n'est pas configuree.")
     client = ElevenLabs(api_key=ELEVEN_API_KEY)
     audio = client.text_to_speech.convert(
         voice_id=voice_id,
@@ -414,4 +417,5 @@ def extraire_traduire():
     return jsonify({"tache_id": tache_id})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', '5000'))
+    app.run(host='0.0.0.0', port=port, debug=False)
